@@ -10,7 +10,7 @@ setup(
     include_package_data = True,
     license = 'BSD License',
     description = 'A Django app to use the information available in http://www.geonames.org',
-    url = 'https://github.com/dablak/django-geonames',
+    url = 'https://github.com/chrisspen/django-geonames',
     author = 'Chris Spencer',
     author_email = 'chrisspen@gmail.com',
     zip_safe = False,
