@@ -1,22 +1,18 @@
 from setuptools import setup, find_packages
 import os
 
-README = open(os.path.join(os.path.dirname(__file__), 'README.txt')).read()
-
-# allow setup.py to be run from any path
-os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
+import geonames
 
 setup(
     name = 'django-geonames',
-    version = '0.1',
+    version = geonames.__version__,
     packages = find_packages(),
     include_package_data = True,
     license = 'BSD License',
     description = 'A Django app to use the information available in http://www.geonames.org',
-    long_description = README,
     url = 'https://github.com/dablak/django-geonames',
-    author = 'Daniel Blasco Calzada',
-    author_email = 'projects@dablak.com',
+    author = 'Chris Spencer',
+    author_email = 'chrisspen@gmail.com',
     zip_safe = False,
     classifiers = [
         'Environment :: Web Environment',
