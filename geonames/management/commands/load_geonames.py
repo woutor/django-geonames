@@ -80,9 +80,9 @@ class Command(BaseCommand):
         model_list = [_ for _ in (model_list or '').split(',') if _.strip()]
         
         all_models = [
-            Timezone,
             Language,
             Country,
+            Timezone,
             Admin1Code,
             Admin2Code,
             Locality,
