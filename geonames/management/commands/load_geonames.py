@@ -170,11 +170,11 @@ class Command(BaseCommand):
                     if not iso_639_3:
                         continue
                     name = name.strip()
-                    names.append(name)
                     if not name:
                         continue
                     if name in names:
                         continue
+                    names.append(name)
                     objects.append(Language(
                         iso_639_1=iso_639_1,
                         iso_639_2=iso_639_2,
