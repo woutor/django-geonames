@@ -50,7 +50,7 @@ class Command(BaseCommand):
     localities = set()
     no_update = False
     skip_to_line = 0
-    
+
     option_list = BaseCommand.option_list + (
         make_option(
             '--models',
@@ -76,9 +76,9 @@ class Command(BaseCommand):
 
     @transaction.commit_on_success
     def load(self, model_list=None):
-        
+
         model_list = [_ for _ in (model_list or '').split(',') if _.strip()]
-        
+
         all_models = [
             Language,
             Country,
@@ -93,13 +93,13 @@ class Command(BaseCommand):
 #                sys.exit(1)
 
         self.download_files()
-        
+
         for mdl in all_models:
             if model_list and mdl.__name__.lower() not in model_list:
                 continue
             #self.cleanup()
             getattr(self, 'load_%s' % mdl.__name__.lower())()
-        
+
         #self.check_errors()
         # Save the time when the load happened
         GeonamesUpdate.objects.create()
@@ -154,6 +154,7 @@ class Command(BaseCommand):
     def load_language(self):
         print 'Loading Languages'
         objects = []
+        names = []
         fn = LANGUAGE_URL.split('/')[-1]
         with open(fn, 'r') as fd:
             try:
@@ -170,6 +171,8 @@ class Command(BaseCommand):
                         continue
                     name = name.strip()
                     if not name:
+                        continue
+                    if name in names:
                         continue
                     objects.append(Language(
                         iso_639_1=iso_639_1,
@@ -222,7 +225,7 @@ class Command(BaseCommand):
 #                    currency_code = fields[10]
 #                    currency_name = fields[11]
 #                    langs_dic[code] = fields[15]
-                
+
                 [
                     iso,
                     iso3,
@@ -244,7 +247,7 @@ class Command(BaseCommand):
                     neighbours,
                     equivalent_fips_code,
                 ] = fields
-                
+
                 if currency_code == '':
                     currency = dollar
                 else:
@@ -253,9 +256,9 @@ class Command(BaseCommand):
                     currency, created = Currency.objects.get_or_create(
                             code=currency_code, defaults={'name': currency_name.strip()})
 
-                # The column 'languages' lists the languages spoken in a country ordered by the number of speakers. The language code is a 'locale'                                                                         
-                # where any two-letter primary-tag is an ISO-639 language abbreviation and any two-letter initial subtag is an ISO-3166 country code.                                                                        
-                #                                                                        
+                # The column 'languages' lists the languages spoken in a country ordered by the number of speakers. The language code is a 'locale'
+                # where any two-letter primary-tag is an ISO-639 language abbreviation and any two-letter initial subtag is an ISO-3166 country code.
+                #
                 # Example : es-AR is the Spanish variant spoken in Argentina.
                 _languages = languages.strip().split(',')
                 languages = []
@@ -274,7 +277,7 @@ class Command(BaseCommand):
 
                 print geonameid,country_name
 #                continue
-            
+
                 country = Country(
                     iso=iso,
                     iso3=iso3,
@@ -440,19 +443,19 @@ class Command(BaseCommand):
         with fh as fd:
             for line in fd:
                 processed += 1
-                
+
                 if not processed % 100:
                     print '\r%i of %i (%.02f%%)' % (processed, total, processed/float(total)*100),
                     sys.stdout.flush()
-                
+
                 if self.skip_to_line and processed < self.skip_to_line:
                     continue
-                
+
                 fields = line[:-1].split('\t')
                 geonameid = int(fields[0].strip())
                 if geonameid in prior_geonameids and self.no_update:
                     continue
-                        
+
                 name = unicode(fields[1].strip(), 'utf-8')
                 name_ascii = fields[2].strip()
                 alternatenames = fields[3].strip()
@@ -580,7 +583,7 @@ class Command(BaseCommand):
 #        allobjects = {}
 #        batch = 10000
 #        processed = 0
-#        
+#
 #        fn = ALTERNATENAME_URL.split('/')[-1]
 #        if fn.endswith('.zip'):
 #            fh = zipfile.ZipFile(fn).open(fn.replace('.zip', '.txt'))
