@@ -170,6 +170,7 @@ class Command(BaseCommand):
                     if not iso_639_3:
                         continue
                     name = name.strip()
+                    names.append(name)
                     if not name:
                         continue
                     if name in names:
