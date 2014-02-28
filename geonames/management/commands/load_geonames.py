@@ -271,10 +271,13 @@ class Command(BaseCommand):
                     if not _language:
                         continue
                     print 'language:',_language
-                    if len(_language) == 3:
-                        languages.append(Language.objects.get(iso_639_3=_language))
-                    else:
-                        languages.append(Language.objects.get(iso_639_1=_language))
+                    try:
+                        if len(_language) == 3:
+                            languages.append(Language.objects.get(iso_639_3=_language))
+                        else:
+                            languages.append(Language.objects.get(iso_639_1=_language))
+                    except Language.DoesNotExist:
+                        pass
 
                 print geonameid,country_name
 #                continue
