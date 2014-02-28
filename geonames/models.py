@@ -43,11 +43,11 @@ class Timezone(models.Model):
 
 
 class Language(models.Model):
-    name = models.CharField(max_length=200, primary_key=True)
+    name = models.CharField(max_length=200)
     iso_639_1 = models.CharField(max_length=50, blank=True, null=True)
     iso_639_2 = models.CharField(max_length=50, blank=True, null=True)
     iso_639_3 = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    
+
 #    iso_3166_country = models.CharField(
 #        max_length=50,
 #        blank=True,
@@ -80,69 +80,69 @@ class ActiveCountryManager(models.Manager):
 
 
 class Country(models.Model):
-    
+
     iso = models.CharField(
         max_length=2,
         db_index=True,
         primary_key=True,
         help_text=_('ISO-3166 2-letter country code'))
-    
+
     iso3 = models.CharField(
         max_length=3,
         db_index=True,
         blank=True,
         null=True,
         help_text=_('ISO-3166 3-letter country code'))
-    
+
     iso_numeric = models.IntegerField(
         blank=True,
         null=True,)
-    
+
     fips = models.CharField(
         max_length=2,
         db_index=True,
         blank=True,
         null=True,
         help_text=_('2-letter country code'))
-    
+
     name = models.CharField(max_length=500, blank=True, null=True)
-    
+
     capital_name = models.CharField(max_length=500, blank=True, null=True, verbose_name=_('capital'))
-    
+
     capital = models.ForeignKey('Locality', blank=True, null=True, related_name='countries')
-    
+
     area = models.FloatField(blank=True, null=True, help_text=_('in sq km'))
-    
+
     population = models.PositiveIntegerField(blank=True, null=True, help_text=_('number of people'))
-    
+
     continent = models.CharField(max_length=2, blank=True, null=True)
-    
+
     tld = models.CharField(
         max_length=10,
         blank=True,
         null=True,
         help_text=_('Top-level domain used for Internet domain names.'))
-    
+
     currency = models.ForeignKey('Currency', blank=True, null=True)
-    
+
     phone = models.CharField(max_length=50, blank=True, null=True, help_text=_('Phone number country code.'))
-    
+
     postal_code_format = models.CharField(max_length=500, blank=True, null=True)
-    
+
     postal_code_regex = models.CharField(max_length=500, blank=True, null=True)
-    
+
     languages = models.ManyToManyField('Language', blank=True, null=True)
-    
+
     geonameid = models.PositiveIntegerField(
         #primary_key=True,
         blank=True,
         null=True)
-    
+
     neighbours = models.ManyToManyField('self', blank=True, null=True)
-    
+
     equivalent_fips_code = models.CharField(max_length=10, blank=True, null=True)
-    
-#    
+
+#
 #    # is the website available in this country?
 #    available = models.BooleanField(default=False)
 #    deleted = models.BooleanField(default=False)
@@ -192,16 +192,16 @@ class Admin1Code(models.Model):
         # On top of this, the code isn't always numeric, so we can't just
         # check for the integer...why must you do this to me geonames?
         # Why can't you just reference the geonameid like a sane person?
-        
+
         raw_code = raw_code.strip()
         if not raw_code:
             return
-        
+
         # Check for direct match.
         q = cls.objects.filter(country=country, code=raw_code).order_by('-geonameid')
         if q.count():
             return q[0]
-        
+
         # Check for leading-zero.
         if raw_code.isdigit():
             num_code = int(raw_code)
@@ -249,7 +249,7 @@ class Admin2Code(models.Model):
         q = cls.objects.filter(country=country, admin1=admin1, code=raw_code).order_by('-geonameid')
         if q.count():
             return q[0]
-    
+
     def save(self, *args, **kwargs):
         # Check consistency
         if self.admin1 is not None and self.admin1.country != self.country:
@@ -270,49 +270,49 @@ class ActiveLocalitiesManager(models.GeoManager):
 
 
 class Locality(models.Model):
-    
+
     geonameid = models.PositiveIntegerField(primary_key=True)
-    
+
     name = models.CharField(max_length=200, db_index=True)
-    
+
     name_ascii = models.CharField(max_length=200, db_index=True, verbose_name=_('name (ASCII)'))
-    
+
     alternatenames = models.TextField(
         blank=True,
         null=True,
         help_text=_('A comma-delimited list of alternative names.'))
-    
+
     latitude = models.DecimalField(
         blank=True,
         null=True,
         max_digits=7,
         decimal_places=2,
         help_text=_('latitude in decimal degrees (wgs84)'))
-    
+
     longitude = models.DecimalField(
         blank=True,
         null=True,
         max_digits=7,
         decimal_places=2,
         help_text=_('longitude in decimal degrees (wgs84)'))
-    
+
     point = models.PointField(
         geography=False,
         blank=True,
         null=True)
-    
+
     feature_class = models.CharField(
         max_length=1,
         blank=True,
         null=True,
         help_text=_('see http://www.geonames.org/export/codes.html'))
-    
+
     feature_code = models.CharField(
         blank=True,
         null=True,
         max_length=10,
         help_text=_('see http://www.geonames.org/export/codes.html'))
-    
+
     country = models.ForeignKey('Country', related_name="localities")
 
     cc2 = models.CharField(
@@ -327,33 +327,33 @@ class Locality(models.Model):
         null=True,
         related_name='localities',
         help_text=_('fipscode (subject to change to iso code), see exceptions below, see file admin1Codes.txt for display names of this code; varchar(20)'))
-    
+
     admin2_code = models.ForeignKey(
         'Admin2Code',
         blank=True,
         null=True,
         related_name='localities',
         help_text=_('code for the second administrative division, a county in the US, see file admin2Codes.txt; varchar(80)'))
-    
+
     admin3_code = models.CharField(
         blank=True,
         null=True,
         max_length=20,
         help_text=_('code for third level administrative division'))
-    
+
     admin4_code = models.CharField(
         blank=True,
         null=True,
         max_length=20,
         help_text=_('code for fourth level administrative division'))
-    
+
     population = models.PositiveIntegerField(blank=True, null=True)
-    
+
     elevation = models.IntegerField(blank=True, null=True, help_text=_('in meters'))
-    
+
     #TODO:how to implement this?
 #    #dem               : digital elevation model, srtm3 or gtopo30, average elevation of 3''x3'' (ca 90mx90m) or 30''x30'' (ca 900mx900m) area in meters, integer. srtm processed by cgiar/ciat.
-    
+
     timezone = models.ForeignKey(
         'Timezone',
         related_name='localities',
