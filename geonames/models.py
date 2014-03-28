@@ -469,10 +469,10 @@ class Locality(models.Model):
         return localities.values_list("geonameid", flat=True)
 
 
-class LocalityAlternateName(models.Model):
-    admin1_code = models.ForeignKey(Locality, related_name="alternatenames", null=True, blank=True)
-    admin2_code = models.ForeignKey(Locality, related_name="alternatenames", null=True, blank=True)
-    locality = models.ForeignKey(Locality, related_name="alternatenames", null=True, blank=True)
+class AlternateName(models.Model):
+    admin1_code = models.ForeignKey(Locality, related_name="admin1_names", null=True, blank=True)
+    admin2_code = models.ForeignKey(Locality, related_name="admin2_names", null=True, blank=True)
+    locality = models.ForeignKey(Locality, related_name="locality_names", null=True, blank=True)
     language = models.CharField(max_length=50, db_index=True)
     name = models.CharField(max_length=200, db_index=True)
     # TODO include localization code
