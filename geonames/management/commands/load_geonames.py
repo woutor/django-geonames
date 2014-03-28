@@ -16,7 +16,7 @@ from django.db.models import Count
 from geonames.models import (
     Timezone, Language, Country, Currency, Locality,
     Admin1Code, Admin2Code,
-    #AlternateName,
+    AlternateName,
     GeonamesUpdate,
 )
 
@@ -27,15 +27,15 @@ FILES = [
     ADMIN1CODE_URL,
     ADMIN2CODE_URL,
     CITIES5000_URL,
-    #ALTERNATENAME_URL,
+    ALTERNATENAME_URL,
 ] = [
     'http://download.geonames.org/export/dump/timeZones.txt',
     'http://download.geonames.org/export/dump/iso-languagecodes.txt',
     'http://download.geonames.org/export/dump/countryInfo.txt',
     'http://download.geonames.org/export/dump/admin1CodesASCII.txt',
     'http://download.geonames.org/export/dump/admin2Codes.txt',
-    'http://download.geonames.org/export/dump/cities5000.zip',
-    #'http://download.geonames.org/export/dump/alternateNames.zip',#TODO:what is the purpose of this file?
+    'http://download.geonames.org/export/dump/cities1000.zip',
+    'http://download.geonames.org/export/dump/alternateNames.zip',
 ]
 
 # See http://www.geonames.org/export/codes.html
@@ -44,7 +44,7 @@ city_types = ['PPL','PPLA','PPLC','PPLA2','PPLA3','PPLA4', 'PPLG']
 
 class Command(BaseCommand):
     help = "Geonames import command."
-    tmpdir = '/tmp'
+    tmpdir = '/tmp/geonames'
     curdir = os.getcwd()
     countries = {}
     localities = set()
@@ -86,11 +86,8 @@ class Command(BaseCommand):
             Admin1Code,
             Admin2Code,
             Locality,
+            #AlternateName,
         ]
-#        for mdl in all_models:
-#            if (not model_list or mdl.__name__.lower() in model_list) and mdl.objects.all().count() is not 0:
-#                print 'ERROR there are %s records in the database' % (mdl.__name__,)
-#                sys.exit(1)
 
         self.download_files()
 
@@ -100,10 +97,9 @@ class Command(BaseCommand):
             #self.cleanup()
             getattr(self, 'load_%s' % mdl.__name__.lower())()
 
-        #self.check_errors()
         # Save the time when the load happened
         GeonamesUpdate.objects.create()
-        #self.cleanup_files()
+        self.cleanup_files()
 
     def download_files(self):
         try:
@@ -111,8 +107,7 @@ class Command(BaseCommand):
             os.chdir(self.tmpdir)
         except OSError:
             os.chdir(self.tmpdir)
-            #print 'Temporary directory %s exists, using already downloaded data' % self.tmpdir
-            #return
+
 
         for f in FILES:
             fn = f.split('/')[-1]
@@ -126,7 +121,7 @@ class Command(BaseCommand):
         os.chdir(self.curdir)
         for f in os.listdir(self.tmpdir):
             os.unlink('%s/%s' % (self.tmpdir, f))
-        #os.rmdir(self.tmpdir)
+        os.rmdir(self.tmpdir)
 
     def load_timezone(self):
         print 'Loading Timezones'
@@ -143,7 +138,6 @@ class Command(BaseCommand):
                 fields = line[:-1].split('\t')
                 country_code, name, gmt_offset, dst_offset = fields[0:4]
                 country = Country.objects.get(iso=country_code.strip())
-                #objects.append(Timezone(country=country, name=name, gmt_offset=gmt_offset, dst_offset=dst_offset))
                 timezone, _ = Timezone.objects.get_or_create(country=country, name=name.strip(), gmt_offset=gmt_offset, defaults=dict(dst_offset=dst_offset))
                 timezone.dst_offset = dst_offset
                 timezone.save()
@@ -185,7 +179,7 @@ class Command(BaseCommand):
                 traceback.print_exc(inst)
                 raise Exception("ERROR parsing:\n {}\n The error was: {}".format(line, inst))
 
-        print 'objects:',objects
+        #print 'objects:',objects
         Language.objects.bulk_create(objects)
         print '{0:8d} Languages loaded'.format(Timezone.objects.all().count())
         self.fix_languagecodes()
@@ -279,7 +273,7 @@ class Command(BaseCommand):
                     except Language.DoesNotExist:
                         pass
 
-                print geonameid,country_name
+                #print geonameid,country_name
 #                continue
 
                 country = Country(
@@ -310,7 +304,7 @@ class Command(BaseCommand):
 #                raise Exception("ERROR parsing:\n {}\n The error was: {}".format(line, inst))
 
 #        Country.objects.bulk_create(objects)
-#        print '{0:8d} Countries loaded'.format(Country.objects.all().count())
+        print '{0:8d} Countries loaded'.format(Country.objects.all().count())
 
         print 'Adding country neighbours...'
         for country, neighbour_iso_codes in country_neighbours.iteritems():
@@ -581,49 +575,52 @@ class Command(BaseCommand):
 #
 #        print " {0:8d} localities set as deleted".format(total)
 
-#    def load_alternatename(self):
-#        print 'Loading alternate names'
-#        objects = []
-#        allobjects = {}
-#        batch = 10000
-#        processed = 0
-#
-#        fn = ALTERNATENAME_URL.split('/')[-1]
-#        if fn.endswith('.zip'):
-#            fh = zipfile.ZipFile(fn).open(fn.replace('.zip', '.txt'))
-#        else:
-#            fh = open(fn, 'r')
-#        with fh as fd:
-#            for line in fd:
-#                try:
-#                    fields = line.split('\t')
-#                    locality_geonameid = fields[1]
-#                    if locality_geonameid not in self.localities:
-#                        continue
-#
-#                    name = fields[3]
-#                    if locality_geonameid in allobjects:
-#                        if name in allobjects[locality_geonameid]:
-#                            continue
-#                    else:
-#                        allobjects[locality_geonameid] = set()
-#
-#                    allobjects[locality_geonameid].add(name)
-#                    objects.append(AlternateName(
-#                        locality_id=locality_geonameid,
-#                        name=name))
-#                    processed += 1
-#                except Exception, inst:
-#                    traceback.print_exc(inst)
-#                    raise Exception("ERROR parsing:\n {}\n The error was: {}".format(line, inst))
-#
-#                if processed % batch == 0:
-#                    AlternateName.objects.bulk_create(objects)
-#                    print "{0:8d} AlternateNames loaded".format(processed)
-#                    objects = []
-#
-#        AlternateName.objects.bulk_create(objects)
-#        print "{0:8d} AlternateNames loaded".format(processed)
+    def load_alternatename(self):
+        print 'Loading alternate names'
+        objects = []
+        allobjects = {}
+        batch = 10000
+        processed = 0
+
+        fn = ALTERNATENAME_URL.split('/')[-1]
+        if fn.endswith('.zip'):
+            fh = zipfile.ZipFile(fn).open(fn.replace('.zip', '.txt'))
+        else:
+            fh = open(fn, 'r')
+        with fh as fd:
+            for line in fd:
+                try:
+                    fields = line.split('\t')
+                    locality_geonameid = fields[1]
+                    if locality_geonameid not in self.localities:
+                        continue
+
+                    language = fields[2].strip()
+
+                    name = fields[3].strip()
+                    if locality_geonameid in allobjects:
+                        if language in allobjects[locality_geonameid]:
+                            continue
+                    else:
+                        allobjects[locality_geonameid] = set()
+
+                    allobjects[locality_geonameid].add(language)
+                    objects.append(AlternateName(
+                        locality_id=locality_geonameid,
+                        language=language,
+                        name=name))
+                    processed += 1
+                except Exception, inst:
+                    traceback.print_exc(inst)
+                    raise Exception("ERROR parsing:\n {}\n The error was: {}".format(line, inst))
+
+                if processed % batch == 0:
+                    AlternateName.objects.bulk_create(objects)
+                    print "{0:8d} AlternateNames loaded".format(processed)
+                    objects = []
+
+        AlternateName.objects.bulk_create(objects)
+        print "{0:8d} AlternateNames loaded".format(processed)
 
     def check_errors(self):
         print 'Checking errors'

@@ -286,14 +286,14 @@ class Locality(models.Model):
         blank=True,
         null=True,
         max_digits=7,
-        decimal_places=2,
+        decimal_places=7,
         help_text=_('latitude in decimal degrees (wgs84)'))
 
     longitude = models.DecimalField(
         blank=True,
         null=True,
         max_digits=7,
-        decimal_places=2,
+        decimal_places=7,
         help_text=_('longitude in decimal degrees (wgs84)'))
 
     point = models.PointField(
@@ -469,15 +469,16 @@ class Locality(models.Model):
         return localities.values_list("geonameid", flat=True)
 
 
-#TODO:is this model necessary if we have Locality.alternatenames? especially since nothing else references this model...
-#class AlternateName(models.Model):
-#    locality = models.ForeignKey(Locality, related_name="alternatenames")
-#    name = models.CharField(max_length=200, db_index=True)
-#    # TODO include localization code
-#
-#    class Meta:
-#        unique_together = (("locality", "name"),)
-#        ordering = ['name']
-#
-#    def __unicode__(self):
-#        return self.name
+class LocalityAlternateName(models.Model):
+    admin1_code = models.ForeignKey(Locality, related_name="alternatenames", null=True, blank=True)
+    admin2_code = models.ForeignKey(Locality, related_name="alternatenames", null=True, blank=True)
+    locality = models.ForeignKey(Locality, related_name="alternatenames", null=True, blank=True)
+    language = models.CharField(max_length=50, db_index=True)
+    name = models.CharField(max_length=200, db_index=True)
+    # TODO include localization code
+
+    class Meta:
+        ordering = ['name']
+
+    def __unicode__(self):
+        return self.name
