@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.contrib.gis.db import models
 from django.contrib.gis.measure import D
 from django.db.models import Q
-from django.utils.translation import ugettext, ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 from django.contrib.gis.geos import Point
 
 # Some constants for the geo maths
